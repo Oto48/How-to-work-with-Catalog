@@ -7,39 +7,97 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Api\Data\ProductInterfaceFactory;
 use Magento\Framework\App\State;
 use Magento\Catalog\Model\CategoryFactory;
+use Magento\Eav\Setup\EavSetup;
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\Product\Visibility;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Catalog\Model\Product;
 
 class AddSimpleProduct implements DataPatchInterface
 {
-    private $productFactory;
-    private $productRepository;
-    private $categoryFactory;
-    private $appState;
+    /**
+     * @var ProductInterfaceFactory
+     */
+    protected $productFactory;
+
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected $productRepository;
+
+    /**
+     * @var CategoryFactory
+     */
+    protected $categoryFactory;
+
+    /**
+     * @var State
+     */
+    protected $appState;
+
+    /**
+     * @var EavSetup
+     */
+    protected $eavSetup;
 
     public function __construct(
         ProductInterfaceFactory $productFactory,
         ProductRepositoryInterface $productRepository,
         CategoryFactory $categoryFactory,
-        State $appState
+        State $appState,
+        EavSetup $eavSetup
     ) {
         $this->productFactory = $productFactory;
         $this->productRepository = $productRepository;
         $this->categoryFactory = $categoryFactory;
         $this->appState = $appState;
-
-        // Set app area to avoid 'Area code not set' errors
-        $this->appState->setAreaCode('adminhtml');
+        $this->eavSetup = $eavSetup;
     }
 
-    public function apply()
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    public function apply() : void
     {
+        // Emulate the 'adminhtml' area and call the execute function
+        $this->appState->emulateAreaCode('adminhtml', [$this, 'execute']);
+    }
+
+    /**
+     * @return void
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\StateException
+     */
+    public function execute() : void
+    {
+        $sku = 'test-simple-product';
+
+        try {
+            // Check if product exists by SKU
+            $existingProduct = $this->productRepository->get($sku);
+            // If the product exists, skip creating it
+            if ($existingProduct->getId()) {
+                return; // Skip product creation
+            }
+        } catch (NoSuchEntityException $e) {
+            // Product does not exist, continue creating it
+        }
+
+        // Get the attribute set ID dynamically
+        $attributeSetId = $this->eavSetup->getAttributeSetId(Product::ENTITY, 'Default');
+
         // Create the product
         $product = $this->productFactory->create();
         $product->setSku('test-simple-product');
         $product->setName('Test Simple Product');
-        $product->setAttributeSetId(4); // Default attribute set
-        $product->setStatus(1); // Enabled
+        $product->setAttributeSetId($attributeSetId); // Default attribute set
+        $product->setStatus(Status::STATUS_ENABLED);
         $product->setWeight(1);
-        $product->setVisibility(4); // Catalog & Search
+        $product->setVisibility(Visibility::VISIBILITY_BOTH);
         $product->setTaxClassId(0); // None
         $product->setTypeId('simple');
         $product->setPrice(20.00); // Set price
@@ -65,16 +123,22 @@ class AddSimpleProduct implements DataPatchInterface
             $category->save();
         } else {
             // Handle the case if the category is not found
-            throw new \Magento\Framework\Exception\LocalizedException(__('Men category not found.'));
+            throw new LocalizedException(__('Men category not found.'));
         }
     }
 
-    public static function getDependencies()
+    /**
+     * @return array|string[]
+     */
+    public static function getDependencies() : array
     {
         return [];
     }
 
-    public function getAliases()
+    /**
+     * @return array|string[]
+     */
+    public function getAliases() : array
     {
         return [];
     }
