@@ -7,6 +7,9 @@ use Magento\Catalog\Model\CategoryFactory;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Catalog\Model\Category;
+use Magento\Framework\DataObject;
+use Magento\Framework\Exception\CouldNotSaveException;
 
 /**
  * Add categories data patch
@@ -16,21 +19,21 @@ class AddCategories implements DataPatchInterface
     /**
      * @var CategoryFactory
      */
-    private CategoryFactory $categoryFactory;
+    protected CategoryFactory $categoryFactory;
 
     /**
      * @var CategoryRepositoryInterface
      */
-    private CategoryRepositoryInterface $categoryRepository;
+    protected CategoryRepositoryInterface $categoryRepository;
 
     /**
      * @var ScopeConfigInterface
      */
-    private ScopeConfigInterface $scopeConfig;
+    protected ScopeConfigInterface $scopeConfig;
 
     /**
      * AddCategories constructor.
-     * 
+     *
      * @param CategoryFactory $categoryFactory
      * @param CategoryRepositoryInterface $categoryRepository
      * @param ScopeConfigInterface $scopeConfig
@@ -46,9 +49,8 @@ class AddCategories implements DataPatchInterface
     }
 
     /**
-     * Apply the data patch
-     *
      * @return void
+     * @throws CouldNotSaveException
      */
     public function apply(): void
     {
@@ -59,12 +61,11 @@ class AddCategories implements DataPatchInterface
     }
 
     /**
-     * Create a category if it doesn't exist
-     *
      * @param string $name
-     * @return \Magento\Catalog\Model\Category
+     * @return Category
+     * @throws CouldNotSaveException
      */
-    private function createCategory(string $name)
+    private function createCategory(string $name) : Category
     {
         // Check if the category exists
         $category = $this->categoryFactory->create()->getCollection()

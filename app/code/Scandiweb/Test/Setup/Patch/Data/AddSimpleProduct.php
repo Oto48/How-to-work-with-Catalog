@@ -13,34 +13,45 @@ use Magento\Catalog\Model\Product\Visibility;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Catalog\Model\Product;
+use Exception;
+use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\StateException;
 
 class AddSimpleProduct implements DataPatchInterface
 {
     /**
      * @var ProductInterfaceFactory
      */
-    protected $productFactory;
+    protected ProductInterfaceFactory $productFactory;
 
     /**
      * @var ProductRepositoryInterface
      */
-    protected $productRepository;
+    protected ProductRepositoryInterface $productRepository;
 
     /**
      * @var CategoryFactory
      */
-    protected $categoryFactory;
+    protected CategoryFactory $categoryFactory;
 
     /**
      * @var State
      */
-    protected $appState;
+    protected State $appState;
 
     /**
      * @var EavSetup
      */
-    protected $eavSetup;
+    protected EavSetup $eavSetup;
 
+    /**
+     * @param ProductInterfaceFactory $productFactory
+     * @param ProductRepositoryInterface $productRepository
+     * @param CategoryFactory $categoryFactory
+     * @param State $appState
+     * @param EavSetup $eavSetup
+     */
     public function __construct(
         ProductInterfaceFactory $productFactory,
         ProductRepositoryInterface $productRepository,
@@ -57,7 +68,7 @@ class AddSimpleProduct implements DataPatchInterface
 
     /**
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function apply() : void
     {
@@ -67,10 +78,10 @@ class AddSimpleProduct implements DataPatchInterface
 
     /**
      * @return void
+     * @throws CouldNotSaveException
+     * @throws InputException
      * @throws LocalizedException
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
+     * @throws StateException
      */
     public function execute() : void
     {
